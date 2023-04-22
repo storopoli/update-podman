@@ -21,6 +21,12 @@ fn get_name(str: &str) -> String {
     name.to_owned()
 }
 
+fn get_image_id(str: &str) -> String {
+    let splits: Vec<String> = str.split_whitespace().map(|s| s.to_string()).collect();
+    let name = &splits[2];
+    name.to_owned()
+}
+
 fn parse_podman_output() -> Vec<String> {
     let output = Command::new("podman")
         .args(["image", "list"])
@@ -41,6 +47,7 @@ fn update_container(container: &str) -> std::process::Child {
         .spawn()
         .expect("podman pull failed to start")
 }
+
 fn update_containers(splits: Vec<String>) {
     let old_containers: Vec<String> = splits
         .into_iter()
@@ -59,13 +66,44 @@ fn update_containers(splits: Vec<String>) {
     }
 }
 
+fn remove_container(container: &str) -> std::process::Child {
+    let container_image_id = get_image_id(container);
+    Command::new("podman")
+        .arg("rmi")
+        .arg(container_image_id)
+        .arg("-f")
+        .spawn()
+        .expect("podman rmi failed to start")
+}
+
+fn remove_containers(splits: Vec<String>) {
+    let containers: Vec<String> = splits
+        .into_iter()
+        .filter(|s| get_name(s).contains("<none>"))
+        .collect();
+
+    for c in containers {
+        let status = remove_container(&c)
+            .wait()
+            .expect("podman rmi failed to run");
+
+        if !status.success() {
+            println!("podman rmi failed to run");
+            std::process::exit(1);
+        }
+    }
+}
+
 fn main() {
     let podman_containers = parse_podman_output();
     update_containers(podman_containers);
+    let podman_containers = parse_podman_output();
+    remove_containers(podman_containers);
 }
 
 #[cfg(test)]
 mod tests {
+    use super::get_image_id;
     use super::get_name;
     use super::get_status;
     use super::Status;
@@ -89,5 +127,12 @@ mod tests {
         let str =
         "ghcr.io/owner/container                 latest      667a7cd45f0a  3 days ago   1.23 gb";
         assert_eq!("ghcr.io/owner/container".to_owned(), get_name(str));
+    }
+
+    #[test]
+    fn test_get_image_id() {
+        let str =
+        "ghcr.io/owner/container                 latest      667a7cd45f0a  3 days ago   1.23 gb";
+        assert_eq!("667a7cd45f0a".to_owned(), get_image_id(str));
     }
 }
