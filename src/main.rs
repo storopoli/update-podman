@@ -7,24 +7,34 @@ enum Status {
 }
 
 fn get_status(str: &str) -> Status {
-    let splits: Vec<String> = str.split_whitespace().map(|s| s.to_string()).collect();
+    let splits: Vec<String> = str
+        .split_whitespace()
+        .map(std::string::ToString::to_string)
+        .collect();
     let age = &splits[4];
-    match age.contains("day") || age.contains("hour") {
-        true => Status::New,
-        false => Status::Old,
+    if age.contains("day") || age.contains("hour") {
+        Status::New
+    } else {
+        Status::Old
     }
 }
 
 fn get_name(str: &str) -> String {
-    let splits: Vec<String> = str.split_whitespace().map(|s| s.to_string()).collect();
+    let splits: Vec<String> = str
+        .split_whitespace()
+        .map(std::string::ToString::to_string)
+        .collect();
     let name = &splits[0];
-    name.to_owned()
+    name.clone()
 }
 
 fn get_image_id(str: &str) -> String {
-    let splits: Vec<String> = str.split_whitespace().map(|s| s.to_string()).collect();
+    let splits: Vec<String> = str
+        .split_whitespace()
+        .map(std::string::ToString::to_string)
+        .collect();
     let name = &splits[2];
-    name.to_owned()
+    name.clone()
 }
 
 fn parse_podman_output() -> Vec<String> {
@@ -33,7 +43,10 @@ fn parse_podman_output() -> Vec<String> {
         .output()
         .expect("failed to execute podman image list");
     let stdout = String::from_utf8_lossy(&output.stdout);
-    let mut splits: Vec<String> = stdout.lines().map(|s| s.to_string()).collect();
+    let mut splits: Vec<String> = stdout
+        .lines()
+        .map(std::string::ToString::to_string)
+        .collect();
     // the first index is the header
     splits.remove(0);
     splits
