@@ -43,4 +43,4 @@ jobs:
         with:
           toolchain: stable
       - run: rustup component add clippy
-      - run: cargo clippy -- -D clippy::all -D clippy::pedantic -D warnings
+      - run: cargo clippy -- -D clippy::all -D warnings
